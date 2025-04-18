@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>轉檔統計儀表板</title>
+  <link rel="stylesheet"
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body { background-color: #f5f5f5; padding: 20px; }
+    .section { margin-bottom: 40px; }
+    table { font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center">轉檔統計儀表板</h1>
+
+    <!-- 今日統計 -->
+    <div class="section" id="today-stats">
+      <h3 class="text-center">今日統計</h3>
+      <table class="table table-bordered table-striped text-center">
+        <thead class="thead-dark">
+          <tr>
+            <th>轉檔人員</th>
+            <th>正班轉檔數</th>
+            <th>正班材數</th>
+            <th>加班轉檔數</th>
+            <th>加班材數</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in employee_stats %}
+          <tr>
+            <td>{{ stat.employee }}</td>
+            <td>{{ stat.today_regular_count }}</td>
+            <td>{{ stat.today_regular_material | round(2) }}</td>
+            <td>{{ stat.today_overtime_count }}</td>
+            <td>{{ stat.today_overtime_material | round(2) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 本月統計 -->
+    <div class="section" id="monthly-stats">
+      <h3 class="text-center">本月統計</h3>
+      <table class="table table-bordered table-striped text-center">
+        <thead class="thead-dark">
+          <tr>
+            <th>轉檔人員</th><th>正班轉檔數</th><th>正班材數</th>
+            <th>加班轉檔數</th><th>加班材數</th>
+            <th>本月總轉檔數</th><th>本月總材數</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in employee_stats %}
+          <tr>
+            <td>{{ stat.employee }}</td>
+            <td>{{ stat.monthly.regular.file_count if stat.monthly.regular is defined else 0 }}</td>
+            <td>{{ stat.monthly.regular.material | round(2) if stat.monthly.regular is defined else '0.00' }}</td>
+            <td>{{ stat.monthly.overtime.file_count if stat.monthly.overtime is defined else 0 }}</td>
+            <td>{{ stat.monthly.overtime.material | round(2) if stat.monthly.overtime is defined else '0.00' }}</td>
+            <td>{{ stat.monthly.file_count }}</td>
+            <td>{{ stat.monthly.material | round(2) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 載入 Socket.IO client（不用 integrity 標籤） -->
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script>
+    const socket = io("https://773d-61-216-19-45.ngrok-free.app", {
+      path: '/socket.io',
+      transports: ['websocket']
+    });
+    socket.on('connect', () => console.log('Socket.IO 已連線'));
+    socket.on('stats_update', (data) => {
+      console.log('收到更新通知:', data);
+      // 全頁重載以顯示最新數據
+      window.location.reload();
+    });
+    socket.on('disconnect', (reason) => {
+      console.warn('Socket.IO 已斷線:', reason);
+    });
+  </script>
+</body>
+</html>
